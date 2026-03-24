@@ -1,6 +1,6 @@
 const config = {
   plugins: {
-    "@tailwindcss/postcss": {},
+    // Intentionally empty: this project does not use Tailwind.
   },
 };
 
