@@ -1,3 +1,3 @@
-export * from "@/types/api.types";
-export * from "@/types/auth.types";
-export * from "@/types/chat.types";
+export * from './auth.types';
+export * from './api.types';
+export * from './chat.types';

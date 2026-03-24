@@ -1,32 +1,34 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import { Button } from "@mui/material";
-import { useAuth } from "@/hooks/useAuth";
+import { Button, CircularProgress } from '@mui/material';
+import { Refresh } from '@mui/icons-material';
+import { useUser } from '@/hooks/useUser';
 
-export default function SyncUserButton() {
-    const { syncProfile } = useAuth();
-    const [isSyncing, setIsSyncing] = useState(false);
+export default function RefreshUserButton() {
+  const { myInfo, loading } = useUser();
 
-    const handleClick = async () => {
-        setIsSyncing(true);
+  const handleRefresh = async () => {
+    try {
+      await myInfo();
+    } catch (error) {
+      console.error('Failed to refresh user info:', error);
+    }
+  };
 
-        try {
-            await syncProfile();
-        } finally {
-            setIsSyncing(false);
-        }
-    };
-
-    return (
-        <Button
-            variant="outlined"
-            startIcon={<SyncRoundedIcon />}
-            onClick={handleClick}
-            disabled={isSyncing}
-        >
-            {isSyncing ? "Syncing..." : "Sync profile"}
-        </Button>
-    );
+  return (
+    <Button
+      onClick={handleRefresh}
+      disabled={loading}
+      startIcon={loading ? <CircularProgress size={16} /> : <Refresh />}
+      sx={{
+        color: '#b9bbbe',
+        textTransform: 'none',
+        '&:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        },
+      }}
+    >
+      {loading ? 'Đang tải...' : 'Làm mới thông tin'}
+    </Button>
+  );
 }

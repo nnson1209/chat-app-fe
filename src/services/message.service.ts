@@ -1,22 +1,32 @@
-import axiosClient from "@/api/axiosClient";
-import API_ENDPOINTS from "@/api/apiEndpoints";
-import type { ApiResponse, Message, PaginatedResponse, SendMessagePayload } from "@/types";
+import axiosClient from '@/api/axiosClient';
+import { API_ENDPOINTS } from '@/api/apiEndpoints';
+import {
+  ApiResponse,
+  PageResponse,
+  ChatMessageResponse,
+  ChatMessageRequest,
+} from '@/types';
 
-const messageService = {
-    async list(conversationId: string): Promise<PaginatedResponse<Message>> {
-        const response = await axiosClient.get<ApiResponse<PaginatedResponse<Message>>>(
-            API_ENDPOINTS.message.list(conversationId),
-        );
-        return response.data.data;
-    },
+export const messageService = {
+  getMessages: async (
+    conversationId: string,
+    page: number = 1,
+    size: number = 50
+  ): Promise<ApiResponse<PageResponse<ChatMessageResponse>>> => {
+    const response = await axiosClient.get<ApiResponse<PageResponse<ChatMessageResponse>>>(
+      API_ENDPOINTS.MESSAGES.GET_BY_CONVERSATION(conversationId),
+      { params: { page, size } }
+    );
+    return response.data;
+  },
 
-    async send(payload: SendMessagePayload): Promise<Message> {
-        const response = await axiosClient.post<ApiResponse<Message>>(
-            API_ENDPOINTS.message.send(payload.conversationId),
-            { content: payload.content },
-        );
-        return response.data.data;
-    },
+  sendMessage: async (
+    data: ChatMessageRequest
+  ): Promise<ApiResponse<ChatMessageResponse>> => {
+    const response = await axiosClient.post<ApiResponse<ChatMessageResponse>>(
+      API_ENDPOINTS.MESSAGES.SEND,
+      data
+    );
+    return response.data;
+  },
 };
-
-export default messageService;

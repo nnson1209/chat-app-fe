@@ -1,27 +1,27 @@
-export interface User {
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl?: string;
+export interface LoginRequest {
+  email: string;
+  password: string;
 }
 
-export interface AuthTokens {
-    accessToken: string;
-    refreshToken?: string;
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
 }
 
-export interface AuthSession {
-    user: User;
-    tokens: AuthTokens;
+export interface LoginResponse {
+  userId: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
-export interface LoginPayload {
-    email: string;
-    password: string;
+export interface RegisterResponse {
+  username: string;
+  email: string;
 }
 
-export interface RegisterPayload {
-    name: string;
-    email: string;
-    password: string;
+export interface UserDetailResponse {
+  userId: string;
+  email: string;
+  username: string;
 }

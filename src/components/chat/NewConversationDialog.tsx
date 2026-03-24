@@ -1,99 +1,157 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    TextField,
-} from "@mui/material";
-import type { User } from "@/types";
-import { useDebounce } from "@/hooks/useDebounce";
-import userService from "@/services/user.service";
-import UserSearchList from "@/components/chat/UserSearchList";
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  TextField,
+  Box,
+  IconButton,
+} from '@mui/material';
+import { Close, Search } from '@mui/icons-material';
+import { userService } from '@/services/user.service';
+import { conversationService } from '@/services/conversation.service';
+import { UserDetailResponse, ConversationType } from '@/types';
+import { useDebounce } from '@/hooks/useDebounce';
+import UserSearchList from './UserSearchList';
 
 interface NewConversationDialogProps {
-    open: boolean;
-    onClose: () => void;
-    onSelectUser: (user: User) => void;
+  open: boolean;
+  onClose: () => void;
+  onConversationCreated: (conversationId: string) => void;
 }
 
 export default function NewConversationDialog({
-    open,
-    onClose,
-    onSelectUser,
+  open,
+  onClose,
+  onConversationCreated,
 }: NewConversationDialogProps) {
-    const [query, setQuery] = useState("");
-    const [users, setUsers] = useState<User[]>([]);
+  const [keyword, setKeyword] = useState('');
+  const [users, setUsers] = useState<UserDetailResponse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
 
-    const debouncedQuery = useDebounce(query, 500);
-    const trimmedQuery = useMemo(() => debouncedQuery.trim(), [debouncedQuery]);
+  const debouncedKeyword = useDebounce(keyword, 500);
 
-    useEffect(() => {
-        if (!open) {
-            return;
-        }
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!debouncedKeyword.trim()) {
+        setUsers([]);
+        return;
+      }
 
-        if (!trimmedQuery) {
-            return;
-        }
+      try {
+        setLoading(true);
+        const response = await userService.searchUsers(debouncedKeyword, 1, 10);
+        setUsers(response.data.data.content);
+      } catch (error) {
+        console.error('Failed to search users:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        let isCancelled = false;
+    searchUsers();
+  }, [debouncedKeyword]);
 
-        userService
-            .search(trimmedQuery)
-            .then((result) => {
-                if (isCancelled) {
-                    return;
-                }
-                setUsers(result.items);
-            })
-            .catch(() => {
-                if (isCancelled) {
-                    return;
-                }
-                setUsers([]);
-            });
+  const handleSelectUser = async (user: UserDetailResponse) => {
+    try {
+      setCreating(true);
+      const response = await conversationService.createConversation({
+        participantIds: [user.userId],
+        conversationType: ConversationType.PRIVATE,
+      });
 
-        return () => {
-            isCancelled = true;
-        };
-    }, [open, trimmedQuery]);
+      onConversationCreated(response.data.id);
+      handleClose();
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+    } finally {
+      setCreating(false);
+    }
+  };
 
-    return (
-        <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-            <DialogTitle>Tìm bạn bè</DialogTitle>
-            <DialogContent>
-                <TextField
-                    autoFocus
-                    margin="dense"
-                    value={query}
-                    onChange={(event) => {
-                        const next = event.target.value;
-                        setQuery(next);
+  const handleClose = () => {
+    setKeyword('');
+    setUsers([]);
+    onClose();
+  };
 
-                        if (!next.trim()) {
-                            setUsers([]);
-                        }
-                    }}
-                    label="Tìm kiếm"
-                    placeholder="Nhập tên hoặc email..."
-                    fullWidth
-                />
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{
+        paper: {
+          sx: {
+            backgroundColor: '#36393f',
+            backgroundImage: 'none',
+          },
+        },
+      }}
+    >
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          color: '#fff',
+          pb: 1,
+          fontWeight: 600,
+        }}
+      >
+        Tìm kiếm người dùng
+        <IconButton onClick={handleClose} size="small" sx={{ color: '#b9bbbe' }}>
+          <Close />
+        </IconButton>
+      </DialogTitle>
 
-                <UserSearchList
-                    users={users}
-                    onSelect={(user) => {
-                        onSelectUser(user);
-                        onClose();
-                    }}
-                />
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
-            </DialogActions>
-        </Dialog>
-    );
+      <DialogContent sx={{ pt: 2 }}>
+        <TextField
+          fullWidth
+          placeholder="Tìm theo email hoặc tên người dùng..."
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          autoFocus
+          slotProps={{
+            input: {
+              startAdornment: <Search sx={{ color: '#72767d', mr: 1 }} />,
+            },
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: '#202225',
+              color: '#fff',
+              '& fieldset': {
+                borderColor: '#202225',
+              },
+              '&:hover fieldset': {
+                borderColor: '#40444b',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#5865f2',
+              },
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: '#72767d',
+              opacity: 1,
+            },
+          }}
+        />
+
+        <Box sx={{ mt: 2, minHeight: 200, maxHeight: 400, overflowY: 'auto' }}>
+          <UserSearchList
+            users={users}
+            loading={loading}
+            keyword={keyword}
+            creating={creating}
+            onSelectUser={handleSelectUser}
+          />
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
 }

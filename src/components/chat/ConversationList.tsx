@@ -1,89 +1,165 @@
-"use client";
+'use client';
 
-import {
-    Avatar,
-    List,
-    ListItemAvatar,
-    ListItemButton,
-    ListItemText,
-    Skeleton,
-    Stack,
-    Typography,
-} from "@mui/material";
-import { formatDistanceToNow } from "date-fns";
-import type { Conversation } from "@/types";
+import { Box, List, ListItemButton, ListItemAvatar, Avatar, ListItemText, Typography, CircularProgress } from '@mui/material';
+import { ConversationDetailResponse } from '@/types';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
 
 interface ConversationListProps {
-    conversations: Conversation[];
-    activeConversationId?: string;
-    onSelect: (conversationId: string) => void;
-    loading?: boolean;
+  conversations: ConversationDetailResponse[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  loading?: boolean;
 }
 
 export default function ConversationList({
-    conversations,
-    activeConversationId,
-    onSelect,
-    loading,
+  conversations,
+  selectedId,
+  onSelect,
+  loading = false,
 }: ConversationListProps) {
-    if (loading) {
-        return (
-            <List disablePadding>
-                {Array.from({ length: 7 }).map((_, index) => (
-                    <ListItemButton key={index} sx={{ py: 1.25 }}>
-                        <ListItemAvatar>
-                            <Skeleton variant="circular" width={40} height={40} />
-                        </ListItemAvatar>
-                        <ListItemText
-                            primary={<Skeleton width="60%" />}
-                            secondary={<Skeleton width="80%" />}
-                        />
-                        <Skeleton width={42} />
-                    </ListItemButton>
-                ))}
-            </List>
-        );
-    }
+  const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const getConversationName = (conv: ConversationDetailResponse) => {
+    if (conv.name) return conv.name;
+    return conv.participantInfo?.map(p => p.username).join(', ') || 'Conversation';
+  };
+
+  const formatTime = (timeString: string) => {
+    if (!isMounted) return '';
+    return formatDistanceToNow(new Date(timeString), {
+      addSuffix: false,
+      locale: vi,
+    }).replace('khoảng ', '');
+  };
+
+  if (loading) {
     return (
-        <List dense disablePadding>
-            {conversations.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                    No conversations yet.
-                </Typography>
-            ) : (
-                conversations.map((conversation) => (
-                    <ListItemButton
-                        key={conversation.id}
-                        selected={conversation.id === activeConversationId}
-                        onClick={() => onSelect(conversation.id)}
-                        sx={{ py: 1.25 }}
-                    >
-                        <ListItemAvatar>
-                            <Avatar>
-                                {(conversation.title?.trim()?.[0] ?? "?").toUpperCase()}
-                            </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                            primary={
-                                <Typography variant="subtitle2" noWrap>
-                                    {conversation.title || "(Untitled)"}
-                                </Typography>
-                            }
-                            secondary={
-                                <Typography variant="body2" color="text.secondary" noWrap>
-                                    {conversation.lastMessage?.content ?? ""}
-                                </Typography>
-                            }
-                        />
-                        <Stack alignItems="flex-end" sx={{ minWidth: 64 }}>
-                            <Typography variant="caption" color="text.secondary" noWrap>
-                                {formatDistanceToNow(new Date(conversation.updatedAt), { addSuffix: true })}
-                            </Typography>
-                        </Stack>
-                    </ListItemButton>
-                ))
-            )}
-        </List>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress sx={{ color: '#5865f2' }} />
+      </Box>
     );
+  }
+
+  return (
+    <List sx={{ p: 0 }}>
+      {conversations.map((conv) => (
+        <ListItemButton
+          key={conv.id}
+          selected={selectedId === conv.id}
+          onClick={() => onSelect(conv.id)}
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&.Mui-selected': {
+              backgroundColor: '#404249',
+              '&:hover': {
+                backgroundColor: '#404249',
+              },
+            },
+            '&:hover': {
+              backgroundColor: '#35373c',
+            },
+          }}
+        >
+          <ListItemAvatar sx={{ minWidth: 48 }}>
+            <Avatar
+              src={conv.conversationAvatar || undefined}
+              sx={{
+                bgcolor: '#5865f2',
+                width: 40,
+                height: 40,
+                fontSize: '1rem',
+              }}
+            >
+              {getConversationName(conv)[0]?.toUpperCase()}
+            </Avatar>
+          </ListItemAvatar>
+          <ListItemText
+            sx={{ my: 0 }}
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {getConversationName(conv)}
+                </Typography>
+                {conv.lastMessageTime && (
+                  <Typography
+                    component="span"
+                    sx={{
+                      color: '#72767d',
+                      fontSize: '0.75rem',
+                      fontWeight: 400,
+                      ml: 1,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {formatTime(conv.lastMessageTime)}
+                  </Typography>
+                )}
+              </Box>
+            }
+            secondary={
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography
+                  component="span"
+                  sx={{
+                    color: '#b9bbbe',
+                    fontSize: '0.875rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1,
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {conv.lastMessageContent || 'Chưa có tin nhắn'}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1, flexShrink: 0 }}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: conv.isOnline ? '#23a55a' : '#80848e',
+                    }}
+                  />
+                  <Typography
+                    component="span"
+                    sx={{
+                      color: conv.isOnline ? '#23a55a' : '#80848e',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {conv.isOnline ? 'Online' : 'Offline'}
+                  </Typography>
+                </Box>
+              </Box>
+            }
+          />
+        </ListItemButton>
+      ))}
+    </List>
+  );
 }

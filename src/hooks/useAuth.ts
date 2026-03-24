@@ -1,58 +1,72 @@
-"use client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authService } from '@/services/auth.service';
+import { LoginRequest, RegisterRequest } from '@/types';
+import { useUserStore } from '@/store/useUserStore';
 
-import { useCallback } from "react";
-import authService from "@/services/auth.service";
-import userService from "@/services/user.service";
-import useUserStore from "@/store/useUserStore";
-import type { LoginPayload, RegisterPayload } from "@/types";
+export const useAuth = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { setUser, clearUser } = useUserStore();
 
-export function useAuth() {
-    const user = useUserStore((state) => state.user);
-    const token = useUserStore((state) => state.token);
-    const setSession = useUserStore((state) => state.setSession);
-    const clearSession = useUserStore((state) => state.clearSession);
-    const updateUser = useUserStore((state) => state.updateUser);
+  const login = async (data: LoginRequest) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.login(data);
+      
+      if (response.data) {
+        const { accessToken, refreshToken } = response.data;
+        
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
 
-    const login = useCallback(
-        async (payload: LoginPayload) => {
-            const session = await authService.login(payload);
-            setSession(session);
-            return session;
-        },
-        [setSession],
-    );
-
-    const register = useCallback(
-        async (payload: RegisterPayload) => {
-            const session = await authService.register(payload);
-            return session;
-        },
-        [],
-    );
-
-    const logout = useCallback(async () => {
-        try {
-            await authService.logout();
-        } finally {
-            clearSession();
+        const userInfoResponse = await authService.myInfo();
+        if (userInfoResponse.data) {
+          setUser(userInfoResponse.data);
         }
-    }, [clearSession]);
+        
+        router.push('/');
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Đăng nhập thất bại';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const syncProfile = useCallback(async () => {
-        const profile = await userService.syncProfile();
-        updateUser(profile);
-        return profile;
-    }, [updateUser]);
+  const register = async (data: RegisterRequest) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await authService.register(data);
+      router.push('/login');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Đăng ký thất bại';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return {
-        user,
-        token,
-        isAuthenticated: Boolean(token),
-        login,
-        register,
-        logout,
-        syncProfile,
-    };
-}
+  const logout = () => {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    clearUser();
+    router.push('/login');
+  };
 
-export default useAuth;
+  return {
+    login,
+    register,
+    logout,
+    loading,
+    error,
+  };
+};

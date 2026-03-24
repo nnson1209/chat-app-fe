@@ -1,275 +1,237 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import ChatRoundedIcon from "@mui/icons-material/ChatRounded";
-import AddRoundedIcon from "@mui/icons-material/AddRounded";
-import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import SearchRoundedIcon from "@mui/icons-material/SearchRounded";
-import SyncRoundedIcon from "@mui/icons-material/SyncRounded";
-import {
-  AppBar,
-  Avatar,
-  Box,
-  Grid,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Stack,
-  TextField,
-  Toolbar,
-  Typography,
-} from "@mui/material";
-import ChatPlaceholder from "@/components/chat/ChatPlaceholder";
-import ConversationList from "@/components/chat/ConversationList";
-import MessageInput from "@/components/chat/MessageInput";
-import MessageList from "@/components/chat/MessageList";
-import NewConversationDialog from "@/components/chat/NewConversationDialog";
-import { useAuthGuard } from "@/hooks/useAuthGuard";
-import { useAuth } from "@/hooks/useAuth";
-import { useUser } from "@/hooks/useUser";
-import conversationService from "@/services/conversation.service";
-import messageService from "@/services/message.service";
-import type { Conversation, Message, User } from "@/types";
+import { useState, useEffect } from 'react';
+import { Box, Typography, Divider, IconButton } from '@mui/material';
+import { Add, Menu as MenuIcon } from '@mui/icons-material';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { conversationService } from '@/services/conversation.service';
+import { messageService } from '@/services/message.service';
+import { ConversationDetailResponse, ChatMessageResponse, MessageType } from '@/types';
+import ConversationList from '@/components/chat/ConversationList';
+import MessageList from '@/components/chat/MessageList';
+import MessageInput from '@/components/chat/MessageInput';
+import UserProfile from '@/components/common/UserProfile';
+import Logo from '@/components/common/Logo';
+import NewConversationDialog from '@/components/chat/NewConversationDialog';
+import ChatPlaceholder from '@/components/chat/ChatPlaceholder';
 
-export default function ChatPage() {
+export default function HomePage() {
   const { isAuthenticated } = useAuthGuard();
-  const { user } = useUser();
-  const { logout, syncProfile } = useAuth();
 
-  const [isNewConversationOpen, setIsNewConversationOpen] = useState(false);
-  const [newConversationDialogKey, setNewConversationDialogKey] = useState(0);
-  const [conversationQuery, setConversationQuery] = useState("");
+  const [conversations, setConversations] = useState<ConversationDetailResponse[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessageResponse[]>([]);
+  const [loadingConversations, setLoadingConversations] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showNewConversation, setShowNewConversation] = useState(false);
 
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isConversationsLoading, setIsConversationsLoading] = useState(true);
-
-  const [selectedConversationId, setSelectedConversationId] = useState<string>();
-
-  const [messages, setMessages] = useState<Message[] | null>(null);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      return;
+  // Connect WebSocket và subscribe
+  useWebSocket((message: ChatMessageResponse) => {
+    if (selectedConversation && message.conversationId === selectedConversation) {
+      setMessages((prev) => [...prev, message]);
     }
+  });
 
-    let isCancelled = false;
-
-    conversationService
-      .list()
-      .then((result) => {
-        if (isCancelled) {
-          return;
-        }
-        setConversations(result.items);
-      })
-      .catch(() => {
-        if (isCancelled) {
-          return;
-        }
-        setConversations([]);
-      })
-      .finally(() => {
-        if (isCancelled) {
-          return;
-        }
-        setIsConversationsLoading(false);
-      });
-
-    return () => {
-      isCancelled = true;
-    };
+  // Load conversations
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadConversations();
+    }
   }, [isAuthenticated]);
 
+  // Load messages when conversation selected
   useEffect(() => {
-    if (!isAuthenticated) {
-      return;
+    if (selectedConversation) {
+      loadMessages(selectedConversation);
     }
+  }, [selectedConversation]);
 
-    if (!selectedConversationId) {
-      return;
+  const loadConversations = async () => {
+    try {
+      setLoadingConversations(true);
+      const response = await conversationService.getMyConversations(1, 50);
+      setConversations(response.data.content);
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+    } finally {
+      setLoadingConversations(false);
     }
-
-    let isCancelled = false;
-
-    messageService
-      .list(selectedConversationId)
-      .then((result) => {
-        if (isCancelled) {
-          return;
-        }
-        setMessages(result.items);
-      })
-      .catch(() => {
-        if (isCancelled) {
-          return;
-        }
-        setMessages([]);
-      })
-      .finally(() => undefined);
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [isAuthenticated, selectedConversationId]);
-
-  const filteredConversations = useMemo(() => {
-    const q = conversationQuery.trim().toLowerCase();
-    if (!q) {
-      return conversations;
-    }
-
-    return conversations.filter((conversation) =>
-      (conversation.title ?? "").toLowerCase().includes(q),
-    );
-  }, [conversationQuery, conversations]);
-
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = "/login";
   };
 
-  const handleSelectUserForNewConversation = async (selectedUser: User) => {
-    const created = await conversationService.create({
-      participantIds: [selectedUser.id],
-      title: selectedUser.name,
-    });
-
-    setConversations((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
-    setSelectedConversationId(created.id);
-    setMessages(null);
+  const loadMessages = async (conversationId: string) => {
+    try {
+      setLoadingMessages(true);
+      const response = await messageService.getMessages(conversationId, 1, 20);
+      setMessages(response.data.content.reverse());
+    } catch (error) {
+      console.error('Failed to load messages:', error);
+    } finally {
+      setLoadingMessages(false);
+    }
   };
 
   const handleSendMessage = async (content: string) => {
-    if (!selectedConversationId) {
-      return;
+    if (!selectedConversation) return;
+
+    const tempId = `temp-${crypto.randomUUID()}`;
+
+    try {
+      setSendingMessage(true);
+      const response = await messageService.sendMessage({
+        conversationId: selectedConversation,
+        content,
+        messageType: MessageType.TEXT,
+        tempId,
+      });
+
+      setMessages((prev) => [...prev, response.data]);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setSendingMessage(false);
     }
-
-    const sent = await messageService.send({
-      conversationId: selectedConversationId,
-      content,
-    });
-
-    setMessages((prev) => [...(prev ?? []), sent]);
   };
+
+  const handleConversationCreated = (conversationId: string) => {
+    loadConversations();
+    setSelectedConversation(conversationId);
+  };
+
+  const selectedConv = conversations.find((c) => c.id === selectedConversation);
 
   if (!isAuthenticated) {
     return null;
   }
 
   return (
-    <Box sx={{ height: "100dvh", display: "flex", flexDirection: "column" }}>
-      <AppBar
-        position="static"
-        elevation={0}
-        color="default"
-        sx={{ bgcolor: "background.paper" }}
+    <Box sx={{ display: 'flex', height: '100vh', backgroundColor: '#36393f' }}>
+      {/* Sidebar - Conversations */}
+      <Box
+        sx={{
+          width: showSidebar ? 280 : 0,
+          backgroundColor: '#2f3136',
+          borderRight: '1px solid #202225',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'width 0.3s',
+          overflow: 'hidden',
+        }}
       >
-        <Toolbar sx={{ minHeight: 64 }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
-            <ChatRoundedIcon color="primary" />
-            <Typography variant="h6" fontWeight={700}>
-              Chat App
-            </Typography>
-          </Stack>
-
-          <IconButton aria-label="sync profile" onClick={() => syncProfile()}>
-            <SyncRoundedIcon />
+        {/* Header */}
+        <Box
+          sx={{
+            height: 48,
+            px: 2,
+            borderBottom: '1px solid #202225',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
+          <Logo size="small" showText={false} />
+          <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '0.9375rem', flex: 1 }}>
+            Tin nhắn
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setShowNewConversation(true)}
+            sx={{ color: '#b9bbbe', '&:hover': { color: '#fff' } }}
+          >
+            <Add fontSize="small" />
           </IconButton>
+        </Box>
 
-          <Avatar
-            sx={{ width: 32, height: 32, mx: 1 }}
-            src={user?.avatarUrl}
-          >
-            {(user?.name?.[0] ?? "?").toUpperCase()}
-          </Avatar>
+        {/* Conversation List */}
+        <Box sx={{ flex: 1, overflowY: 'auto' }}>
+          <ConversationList
+            conversations={conversations}
+            selectedId={selectedConversation}
+            onSelect={setSelectedConversation}
+            loading={loadingConversations}
+          />
+        </Box>
 
-          <IconButton aria-label="logout" onClick={handleLogout} color="error" sx={{ opacity: 0.85 }}>
-            <LogoutRoundedIcon />
-          </IconButton>
-        </Toolbar>
-      </AppBar>
-
-      <Box sx={{ flex: 1, p: 2 }}>
-        <Grid container spacing={2} sx={{ height: "100%" }}>
-          <Grid
-            item
-            xs={12}
-            md={4}
-            sx={{
-              height: "100%",
-              flexBasis: { md: "30%" },
-              maxWidth: { md: "30%" },
-            }}
-          >
-            <Paper sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column", gap: 1.5 }}>
-              <Stack direction="row" spacing={1} alignItems="center">
-                <TextField
-                  value={conversationQuery}
-                  onChange={(event) => setConversationQuery(event.target.value)}
-                  placeholder="Tìm hội thoại..."
-                  fullWidth
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchRoundedIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                <IconButton
-                  aria-label="new conversation"
-                  onClick={() => {
-                    setNewConversationDialogKey((prev) => prev + 1);
-                    setIsNewConversationOpen(true);
-                  }}
-                >
-                  <AddRoundedIcon />
-                </IconButton>
-              </Stack>
-
-              <Box sx={{ flex: 1, overflow: "hidden" }}>
-                <ConversationList
-                  conversations={filteredConversations}
-                  activeConversationId={selectedConversationId}
-                  onSelect={(conversationId) => {
-                    setSelectedConversationId(conversationId);
-                    setMessages(null);
-                  }}
-                  loading={isConversationsLoading}
-                />
-              </Box>
-            </Paper>
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            md={8}
-            sx={{
-              height: "100%",
-              flexBasis: { md: "70%" },
-              maxWidth: { md: "70%" },
-            }}
-          >
-            <Paper sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column" }}>
-              {selectedConversationId ? (
-                <>
-                  <MessageList messages={messages ?? []} />
-                  <MessageInput onSend={handleSendMessage} />
-                </>
-              ) : (
-                <ChatPlaceholder />
-              )}
-            </Paper>
-          </Grid>
-        </Grid>
+        {/* User Profile */}
+        <Box sx={{ borderTop: '1px solid #202225' }}>
+          <UserProfile />
+        </Box>
       </Box>
 
+      {/* Main Chat Area */}
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        {/* Chat Header */}
+        <Box
+          sx={{
+            height: 48,
+            backgroundColor: '#36393f',
+            borderBottom: '1px solid #202225',
+            display: 'flex',
+            alignItems: 'center',
+            px: 2,
+            gap: 2,
+          }}
+        >
+          <IconButton
+            onClick={() => setShowSidebar(!showSidebar)}
+            sx={{ color: '#b9bbbe', display: { md: 'none' } }}
+            size="small"
+          >
+            <MenuIcon fontSize="small" />
+          </IconButton>
+
+          {selectedConv && (
+            <>
+              <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '0.9375rem' }}>
+                {selectedConv.name || selectedConv.participantInfo?.map(p => p.username).join(', ')}
+              </Typography>
+              <Divider orientation="vertical" flexItem sx={{ borderColor: '#202225' }} />
+              <Typography sx={{ color: '#b9bbbe', fontSize: '0.8125rem' }}>
+                {selectedConv.participantInfo?.length} thành viên
+              </Typography>
+              {/* Online status */}
+              <Divider orientation="vertical" flexItem sx={{ borderColor: '#202225', mx: 1 }} />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    backgroundColor: selectedConv.isOnline ? '#23a55a' : '#80848e',
+                    border: '2px solid #36393f',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                <Typography sx={{
+                  color: selectedConv.isOnline ? '#23a55a' : '#b9bbbe',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}>
+                  {selectedConv.isOnline ? 'Đang hoạt động' : selectedConv.lastOnlineAt || 'Không hoạt động'}
+                </Typography>
+              </Box>
+            </>
+          )}
+        </Box>
+
+        {/* Messages */}
+        {selectedConversation ? (
+          <>
+            <MessageList messages={messages} loading={loadingMessages} />
+            <MessageInput onSend={handleSendMessage} disabled={sendingMessage} />
+          </>
+        ) : (
+          <ChatPlaceholder variant="no-conversation" />
+        )}
+      </Box>
+
+      {/* New Conversation Dialog */}
       <NewConversationDialog
-        key={newConversationDialogKey}
-        open={isNewConversationOpen}
-        onClose={() => setIsNewConversationOpen(false)}
-        onSelectUser={handleSelectUserForNewConversation}
+        open={showNewConversation}
+        onClose={() => setShowNewConversation(false)}
+        onConversationCreated={handleConversationCreated}
       />
     </Box>
   );

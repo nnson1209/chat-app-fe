@@ -1,55 +1,52 @@
-import axios from "axios";
-import { useUserStore } from "@/store/useUserStore";
+import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 
-const axiosClient = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api",
-    timeout: 15000,
+const axiosClient: AxiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
 });
 
+// Request interceptor
 axiosClient.interceptors.request.use(
-    (config) => {
-        if (typeof window !== "undefined") {
-            const persisted = localStorage.getItem("chat-user-store");
-
-            if (persisted) {
-                try {
-                    const parsed = JSON.parse(persisted) as {
-                        state?: { token?: string | null };
-                    };
-                    const token = parsed.state?.token;
-
-                    if (token) {
-                        config.headers.Authorization = `Bearer ${token}`;
-                    }
-                } catch {
-                    localStorage.removeItem("chat-user-store");
-                }
-            }
-        }
-
-        return config;
-    },
-    (error) => Promise.reject(error),
+  (config: InternalAxiosRequestConfig) => {
+    // Get token from localStorage
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
+// Response interceptor
 axiosClient.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (typeof window !== "undefined") {
-            const status = error?.response?.status as number | undefined;
+  (response: AxiosResponse) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
 
-            if (status === 401) {
-                try {
-                    useUserStore.getState().clearSession();
-                } finally {
-                    localStorage.removeItem("chat-user-store");
-                    window.location.href = "/login";
-                }
-            }
-        }
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        const { useUserStore } = await import('@/store/useUserStore');
+        useUserStore.getState().clearUser();
+        window.location.href = '/login';
+      }
+    }
 
-        return Promise.reject(error);
-    },
+    return Promise.reject(error);
+  }
 );
 
 export default axiosClient;

@@ -1,29 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import useUserStore from "@/store/useUserStore";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useUserStore } from '@/store/useUserStore';
 
-const PUBLIC_ROUTES = ["/login", "/register"];
+export const useAuthGuard = () => {
+  const { user } = useUserStore();
+  const router = useRouter();
 
-export function useAuthGuard() {
-    const router = useRouter();
-    const pathname = usePathname();
-    const token = useUserStore((state) => state.token);
-    const isAuthenticated = Boolean(token);
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (!token || !user) {
+      router.push('/login');
+    }
+  }, [user, router]);
 
-    useEffect(() => {
-        if (!isAuthenticated && !PUBLIC_ROUTES.includes(pathname)) {
-            router.replace("/login");
-            return;
-        }
-
-        if (isAuthenticated && PUBLIC_ROUTES.includes(pathname)) {
-            router.replace("/");
-        }
-    }, [isAuthenticated, pathname, router]);
-
-    return { isAuthenticated };
-}
-
-export default useAuthGuard;
+  return { isAuthenticated: !!user };
+};

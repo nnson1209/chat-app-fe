@@ -1,37 +1,26 @@
-import { create } from "zustand";
-import { createJSONStorage, persist } from "zustand/middleware";
-import type { AuthSession, User } from "@/types/auth.types";
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { UserDetailResponse } from '@/types';
 
-interface UserStoreState {
-    user: User | null;
-    token: string | null;
-    setSession: (session: AuthSession | null) => void;
-    clearSession: () => void;
-    updateUser: (partial: Partial<User>) => void;
+interface UserState {
+  user: UserDetailResponse | null;
+  
+  setUser: (user: UserDetailResponse) => void;
+  clearUser: () => void;
 }
 
-export const useUserStore = create<UserStoreState>()(
-    persist(
-        (set) => ({
-            user: null,
-            token: null,
-            setSession: (session) =>
-                set({
-                    user: session?.user ?? null,
-                    token: session?.tokens.accessToken ?? null,
-                }),
-            clearSession: () => set({ user: null, token: null }),
-            updateUser: (partial) =>
-                set((state) => ({
-                    user: state.user ? { ...state.user, ...partial } : state.user,
-                })),
-        }),
-        {
-            name: "chat-user-store",
-            storage: createJSONStorage(() => localStorage),
-            partialize: (state) => ({ user: state.user, token: state.token }),
-        },
-    ),
-);
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      user: null,
 
-export default useUserStore;
+      setUser: (user) => set({ user }),
+
+      clearUser: () => set({ user: null }),
+    }),
+    {
+      name: 'user-storage',
+      storage: createJSONStorage(() => sessionStorage),
+    }
+  )
+);

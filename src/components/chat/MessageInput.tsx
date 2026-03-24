@@ -1,68 +1,95 @@
-"use client";
+'use client';
 
-import { FormEvent, KeyboardEvent, useState } from "react";
-import { Box, IconButton, TextField } from "@mui/material";
-import SendRoundedIcon from "@mui/icons-material/SendRounded";
+import { useState } from 'react';
+import { Box, TextField, IconButton } from '@mui/material';
+import { Send, AddCircleOutline } from '@mui/icons-material';
 
 interface MessageInputProps {
-    onSend: (content: string) => void;
+  onSend: (content: string) => void;
+  disabled?: boolean;
 }
 
-export default function MessageInput({ onSend }: MessageInputProps) {
-    const [content, setContent] = useState("");
+export default function MessageInput({ onSend, disabled = false }: MessageInputProps) {
+  const [message, setMessage] = useState('');
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
+  const handleSend = () => {
+    if (message.trim() && !disabled) {
+      onSend(message.trim());
+      setMessage('');
+    }
+  };
 
-        const trimmed = content.trim();
-        if (!trimmed) {
-            return;
-        }
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
-        onSend(trimmed);
-        setContent("");
-    };
+  return (
+    <Box
+      sx={{
+        p: 2,
+        backgroundColor: '#36393f',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          alignItems: 'center',
+          backgroundColor: '#40444b',
+          borderRadius: 2,
+          px: 1.5,
+          py: 0.5,
+        }}
+      >
+        <IconButton size="small" sx={{ color: '#b9bbbe' }}>
+          <AddCircleOutline fontSize="small" />
+        </IconButton>
 
-    const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-        if (event.key !== "Enter") {
-            return;
-        }
+        <TextField
+          fullWidth
+          multiline
+          maxRows={4}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder="Nhập tin nhắn..."
+          disabled={disabled}
+          variant="standard"
+          sx={{
+            '& .MuiInput-root': {
+              color: '#dcddde',
+              fontSize: '0.9375rem',
+              '&:before, &:after': {
+                display: 'none',
+              },
+            },
+            '& .MuiInputBase-input': {
+              padding: '8px 0',
+              '&::placeholder': {
+                color: '#72767d',
+                opacity: 1,
+              },
+            },
+          }}
+        />
 
-        if (event.shiftKey) {
-            return;
-        }
-
-        event.preventDefault();
-
-        const trimmed = content.trim();
-        if (!trimmed) {
-            return;
-        }
-
-        onSend(trimmed);
-        setContent("");
-    };
-
-    return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", gap: 1, mt: 2 }}>
-            <TextField
-                value={content}
-                onChange={(event) => setContent(event.target.value)}
-                placeholder="Nhập tin nhắn..."
-                multiline
-                minRows={1}
-                maxRows={5}
-                onKeyDown={handleKeyDown}
-                fullWidth
-                sx={{
-                    "& .MuiOutlinedInput-root": {
-                        borderRadius: 999,
-                    },
-                }}
-            />
-            <IconButton type="submit" color="primary" aria-label="send message">
-                <SendRoundedIcon />
-            </IconButton>
-        </Box>
-    );
+        <IconButton
+          onClick={handleSend}
+          disabled={!message.trim() || disabled}
+          size="small"
+          sx={{
+            color: message.trim() ? '#5865f2' : '#72767d',
+            '&:hover': {
+              color: '#4752c4',
+            },
+          }}
+        >
+          <Send fontSize="small" />
+        </IconButton>
+      </Box>
+    </Box>
+  );
 }

@@ -1,32 +1,39 @@
-import axiosClient from "@/api/axiosClient";
-import API_ENDPOINTS from "@/api/apiEndpoints";
-import type { ApiResponse, AuthSession, LoginPayload, RegisterPayload } from "@/types";
+import axiosClient from '@/api/axiosClient';
+import { API_ENDPOINTS } from '@/api/apiEndpoints';
+import { 
+  LoginRequest, 
+  RegisterRequest, 
+  LoginResponse, 
+  RegisterResponse, 
+  UserDetailResponse,
+  ApiResponse 
+} from '@/types';
 
-const authService = {
-    async login(payload: LoginPayload): Promise<AuthSession> {
-        const response = await axiosClient.post<ApiResponse<AuthSession>>(
-            API_ENDPOINTS.auth.login,
-            payload,
-        );
-        return response.data.data;
-    },
+export const authService = {
+  login: async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+    const response = await axiosClient.post<ApiResponse<LoginResponse>>(
+      API_ENDPOINTS.AUTH.LOGIN,
+      data
+    );
+    return response.data;
+  },
 
-    async register(payload: RegisterPayload): Promise<AuthSession> {
-        const response = await axiosClient.post<ApiResponse<AuthSession>>(
-            API_ENDPOINTS.auth.register,
-            payload,
-        );
-        return response.data.data;
-    },
+  register: async (data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> => {
+    const response = await axiosClient.post<ApiResponse<RegisterResponse>>(
+      API_ENDPOINTS.USERS.CREATE,
+      data
+    );
+    return response.data;
+  },
 
-    async me(): Promise<AuthSession> {
-        const response = await axiosClient.get<ApiResponse<AuthSession>>(API_ENDPOINTS.auth.me);
-        return response.data.data;
-    },
+  myInfo: async (): Promise<ApiResponse<UserDetailResponse>> => {
+    const response = await axiosClient.get<ApiResponse<UserDetailResponse>>(
+      API_ENDPOINTS.USERS.MY_INFO
+    );
+    return response.data;
+  },
 
-    async logout(): Promise<void> {
-        await axiosClient.post(API_ENDPOINTS.auth.logout);
-    },
+  logout: () => {
+    // Logout logic handled by Zustand store clearAuth
+  },
 };
-
-export default authService;

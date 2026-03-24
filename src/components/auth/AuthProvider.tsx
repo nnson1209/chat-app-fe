@@ -1,52 +1,79 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useMemo } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { useUser } from "@/hooks/useUser";
-import type { LoginPayload, RegisterPayload, User } from "@/types";
-
-interface AuthContextValue {
-    user: User | null;
-    token: string | null;
-    isAuthenticated: boolean;
-    login: (payload: LoginPayload) => Promise<unknown>;
-    register: (payload: RegisterPayload) => Promise<unknown>;
-    logout: () => Promise<void>;
-    syncProfile: () => Promise<User>;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
+import { useEffect, useState } from 'react';
+import { useUserStore } from '@/store/useUserStore';
+import { authService } from '@/services/auth.service';
 
 interface AuthProviderProps {
-    children: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export default function AuthProvider({ children }: AuthProviderProps) {
-    const { user, token } = useUser();
-    const { login, register, logout, syncProfile } = useAuth();
+  const [isInitialized, setIsInitialized] = useState(false);
+  const { setUser, clearUser } = useUserStore();
 
-    const value = useMemo<AuthContextValue>(
-        () => ({
-            user,
-            token,
-            isAuthenticated: Boolean(token),
-            login,
-            register,
-            logout,
-            syncProfile,
-        }),
-        [login, logout, register, syncProfile, token, user],
+  useEffect(() => {
+    const initAuth = async () => {
+      // Chỉ chạy trên client
+      if (typeof window === 'undefined') return;
+      
+      const token = localStorage.getItem('accessToken');
+      
+      if (token) {
+        try {
+          const response = await authService.myInfo();
+          if (response.data) {
+            setUser(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to fetch user info:', error);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          clearUser();
+        }
+      }
+      setIsInitialized(true);
+    };
+
+    initAuth();
+  }, [setUser, clearUser]);
+
+  // Trên server, luôn render children để tránh hydration mismatch
+  if (typeof window === 'undefined') {
+    return <>{children}</>;
+  }
+
+  // Trên client, chờ initialization
+  if (!isInitialized) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#36393f',
+        }}
+      >
+        <div
+          style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #404249',
+            borderTop: '4px solid #5865f2',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
     );
+  }
 
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuthContext() {
-    const context = useContext(AuthContext);
-
-    if (!context) {
-        throw new Error("useAuthContext must be used within AuthProvider");
-    }
-
-    return context;
+  return <>{children}</>;
 }

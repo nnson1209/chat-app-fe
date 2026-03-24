@@ -1,24 +1,22 @@
 export const API_ENDPOINTS = {
-    auth: {
-        login: "/auth/login",
-        register: "/auth/register",
-        logout: "/auth/logout",
-        me: "/auth/me",
-    },
-    conversation: {
-        list: "/conversations",
-        create: "/conversations",
-        details: (conversationId: string) => `/conversations/${conversationId}`,
-    },
-    message: {
-        list: (conversationId: string) => `/conversations/${conversationId}/messages`,
-        send: (conversationId: string) => `/conversations/${conversationId}/messages`,
-    },
-    user: {
-        profile: "/users/me",
-        search: "/users/search",
-        syncProfile: "/users/sync",
-    },
+  AUTH: {
+    LOGIN: '/api/v1/auth/login',
+    LOGOUT: '/api/v1/auth/logout',
+  },
+  USERS: {
+    CREATE: '/api/v1/users',
+    MY_INFO: '/api/v1/users',
+    SEARCH: '/api/v1/users/search',
+  },
+  CONVERSATIONS: {
+    CREATE: '/api/v1/conversations',
+    MY_CONVERSATIONS: '/api/v1/conversations/my-conversation',
+  },
+  MESSAGES: {
+    SEND: '/api/v1/chat-messages',
+    GET_BY_CONVERSATION: (conversationId: string) => 
+      `/api/v1/chat-messages/conversations/${conversationId}/messages`,
+  },
 } as const;
 
 export default API_ENDPOINTS;

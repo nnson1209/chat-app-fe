@@ -1,18 +1,38 @@
-"use client";
+import { useState } from 'react';
+import { useUserStore } from '@/store/useUserStore';
+import { authService } from '@/services/auth.service';
 
-import useUserStore from "@/store/useUserStore";
+export const useUser = () => {
+  const { user, setUser } = useUserStore();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export function useUser() {
-    const user = useUserStore((state) => state.user);
-    const token = useUserStore((state) => state.token);
-    const updateUser = useUserStore((state) => state.updateUser);
+  const myInfo = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await authService.myInfo();
+      if (response.data) {
+        setUser({
+          userId: response.data.userId,
+          email: response.data.email,
+          username: response.data.username,
+        });
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Không thể tải thông tin user';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return {
-        user,
-        token,
-        isAuthenticated: Boolean(token),
-        updateUser,
-    };
-}
-
-export default useUser;
+  return {
+    user,
+    myInfo,
+    loading,
+    error,
+  };
+};
