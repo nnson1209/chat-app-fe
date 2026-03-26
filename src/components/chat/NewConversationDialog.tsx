@@ -87,7 +87,6 @@ export default function NewConversationDialog({
       slotProps={{
         paper: {
           sx: {
-            backgroundColor: '#36393f',
             backgroundImage: 'none',
           },
         },
@@ -98,13 +97,12 @@ export default function NewConversationDialog({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          color: '#fff',
           pb: 1,
           fontWeight: 600,
         }}
       >
-        Tìm kiếm người dùng
-        <IconButton onClick={handleClose} size="small" sx={{ color: '#b9bbbe' }}>
+        Find people
+        <IconButton onClick={handleClose} size="small" sx={{ color: 'text.secondary' }}>
           <Close />
         </IconButton>
       </DialogTitle>
@@ -112,31 +110,18 @@ export default function NewConversationDialog({
       <DialogContent sx={{ pt: 2 }}>
         <TextField
           fullWidth
-          placeholder="Tìm theo email hoặc tên người dùng..."
+          placeholder="Search by email or username…"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           autoFocus
           slotProps={{
             input: {
-              startAdornment: <Search sx={{ color: '#72767d', mr: 1 }} />,
+              startAdornment: <Search color="action" sx={{ mr: 1 }} />,
             },
           }}
           sx={{
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: '#202225',
-              color: '#fff',
-              '& fieldset': {
-                borderColor: '#202225',
-              },
-              '&:hover fieldset': {
-                borderColor: '#40444b',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: '#5865f2',
-              },
-            },
             '& .MuiInputBase-input::placeholder': {
-              color: '#72767d',
+              color: (theme) => theme.palette.text.secondary,
               opacity: 1,
             },
           }}

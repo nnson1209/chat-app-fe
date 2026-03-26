@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material';
+import { darken } from '@mui/material/styles';
 import { Chat } from '@mui/icons-material';
 
 interface LogoProps {
@@ -27,20 +28,28 @@ export default function Logo({ size = 'medium', showText = true }: LogoProps) {
           width: sizes[size].icon,
           height: sizes[size].icon,
           borderRadius: '50%',
-          background: 'linear-gradient(135deg, #5865f2 0%, #7289da 100%)',
+          background: (theme) =>
+            `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${darken(
+              theme.palette.primary.main,
+              0.25,
+            )} 100%)`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(88, 101, 242, 0.4)',
-          transition: 'transform 0.2s ease',
+          boxShadow: (theme) => theme.shadows[6],
+          transition: (theme) =>
+            theme.transitions.create(['transform', 'box-shadow'], {
+              duration: theme.transitions.duration.shortest,
+            }),
           '&:hover': {
             transform: 'scale(1.05)',
+            boxShadow: (theme) => theme.shadows[10],
           },
         }}
       >
         <Chat
           sx={{
-            color: '#fff',
+            color: (theme) => theme.palette.common.white,
             fontSize: sizes[size].icon * 0.6,
           }}
         />
@@ -51,24 +60,24 @@ export default function Logo({ size = 'medium', showText = true }: LogoProps) {
         <Box>
           <Typography
             sx={{
-              color: '#fff',
+              color: 'text.primary',
               fontSize: sizes[size].text,
               fontWeight: 700,
               lineHeight: 1.2,
               letterSpacing: '-0.02em',
             }}
           >
-            javabuilder.online
+            Chat
           </Typography>
           <Typography
             sx={{
-              color: '#b9bbbe',
+              color: 'text.secondary',
               fontSize: `calc(${sizes[size].text} * 0.6)`,
               fontWeight: 500,
               letterSpacing: '0.05em',
             }}
           >
-            CHAT
+            MESSENGER
           </Typography>
         </Box>
       )}

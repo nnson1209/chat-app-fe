@@ -31,7 +31,7 @@ export const useAuth = () => {
         router.push('/');
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Đăng nhập thất bại';
+      const errorMessage = err.response?.data?.message || 'Sign-in failed';
       setError(errorMessage);
       throw err;
     } finally {
@@ -47,7 +47,7 @@ export const useAuth = () => {
       await authService.register(data);
       router.push('/login');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Đăng ký thất bại';
+      const errorMessage = err.response?.data?.message || 'Sign-up failed';
       setError(errorMessage);
       throw err;
     } finally {

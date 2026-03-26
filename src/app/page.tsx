@@ -1,8 +1,10 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Typography, Divider, IconButton } from '@mui/material';
+import { Box, Typography, Divider, IconButton, useMediaQuery } from '@mui/material';
 import { Add, Menu as MenuIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { conversationService } from '@/services/conversation.service';
@@ -18,6 +20,8 @@ import ChatPlaceholder from '@/components/chat/ChatPlaceholder';
 
 export default function HomePage() {
   const { isAuthenticated } = useAuthGuard();
+  const theme = useTheme();
+  const mdUp = useMediaQuery(theme.breakpoints.up('md'));
 
   const [conversations, setConversations] = useState<ConversationDetailResponse[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -41,6 +45,10 @@ export default function HomePage() {
       loadConversations();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    setShowSidebar(mdUp);
+  }, [mdUp]);
 
   // Load messages when conversation selected
   useEffect(() => {
@@ -107,17 +115,27 @@ export default function HomePage() {
   }
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', backgroundColor: '#36393f' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100dvh',
+        backgroundColor: 'background.default',
+        color: 'text.primary',
+      }}
+    >
       {/* Sidebar - Conversations */}
       <Box
         sx={{
-          width: showSidebar ? 280 : 0,
-          backgroundColor: '#2f3136',
-          borderRight: '1px solid #202225',
+          width: { xs: showSidebar ? '80vw' : 0, sm: showSidebar ? 320 : 0, md: 320 },
+          maxWidth: 360,
+          backgroundColor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
           display: 'flex',
           flexDirection: 'column',
-          transition: 'width 0.3s',
+          transition: (t) => t.transitions.create('width', { duration: t.transitions.duration.shortest }),
           overflow: 'hidden',
+          flexShrink: 0,
         }}
       >
         {/* Header */}
@@ -125,20 +143,21 @@ export default function HomePage() {
           sx={{
             height: 48,
             px: 2,
-            borderBottom: '1px solid #202225',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
           }}
         >
           <Logo size="small" showText={false} />
-          <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '0.9375rem', flex: 1 }}>
-            Tin nhắn
+          <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem', flex: 1 }}>
+            Messages
           </Typography>
           <IconButton
             size="small"
             onClick={() => setShowNewConversation(true)}
-            sx={{ color: '#b9bbbe', '&:hover': { color: '#fff' } }}
+            sx={{ color: 'text.secondary' }}
           >
             <Add fontSize="small" />
           </IconButton>
@@ -155,7 +174,7 @@ export default function HomePage() {
         </Box>
 
         {/* User Profile */}
-        <Box sx={{ borderTop: '1px solid #202225' }}>
+        <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
           <UserProfile />
         </Box>
       </Box>
@@ -166,8 +185,9 @@ export default function HomePage() {
         <Box
           sx={{
             height: 48,
-            backgroundColor: '#36393f',
-            borderBottom: '1px solid #202225',
+            backgroundColor: 'background.default',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             display: 'flex',
             alignItems: 'center',
             px: 2,
@@ -176,7 +196,7 @@ export default function HomePage() {
         >
           <IconButton
             onClick={() => setShowSidebar(!showSidebar)}
-            sx={{ color: '#b9bbbe', display: { md: 'none' } }}
+            sx={{ color: 'text.secondary', display: { md: 'none' } }}
             size="small"
           >
             <MenuIcon fontSize="small" />
@@ -184,32 +204,35 @@ export default function HomePage() {
 
           {selectedConv && (
             <>
-              <Typography sx={{ color: '#fff', fontWeight: 600, fontSize: '0.9375rem' }}>
+              <Typography sx={{ fontWeight: 800, fontSize: '0.9375rem' }}>
                 {selectedConv.name || selectedConv.participantInfo?.map(p => p.username).join(', ')}
               </Typography>
-              <Divider orientation="vertical" flexItem sx={{ borderColor: '#202225' }} />
-              <Typography sx={{ color: '#b9bbbe', fontSize: '0.8125rem' }}>
-                {selectedConv.participantInfo?.length} thành viên
+              <Divider orientation="vertical" flexItem />
+              <Typography sx={{ color: 'text.secondary', fontSize: '0.8125rem' }}>
+                {selectedConv.participantInfo?.length} members
               </Typography>
               {/* Online status */}
-              <Divider orientation="vertical" flexItem sx={{ borderColor: '#202225', mx: 1 }} />
+              <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <Box
                   sx={{
                     width: 10,
                     height: 10,
                     borderRadius: '50%',
-                    backgroundColor: selectedConv.isOnline ? '#23a55a' : '#80848e',
-                    border: '2px solid #36393f',
+                    backgroundColor: selectedConv.isOnline ? 'success.main' : 'text.disabled',
+                    border: '2px solid',
+                    borderColor: 'background.default',
                     boxSizing: 'border-box',
                   }}
                 />
-                <Typography sx={{
-                  color: selectedConv.isOnline ? '#23a55a' : '#b9bbbe',
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}>
-                  {selectedConv.isOnline ? 'Đang hoạt động' : selectedConv.lastOnlineAt || 'Không hoạt động'}
+                <Typography
+                  sx={{
+                    color: selectedConv.isOnline ? 'success.main' : 'text.secondary',
+                    fontSize: '0.875rem',
+                    fontWeight: 700,
+                  }}
+                >
+                  {selectedConv.isOnline ? 'Online' : selectedConv.lastOnlineAt || 'Offline'}
                 </Typography>
               </Box>
             </>

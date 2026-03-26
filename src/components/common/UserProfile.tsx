@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Avatar, Typography, Menu, MenuItem } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Logout, Settings } from '@mui/icons-material';
 import { useState } from 'react';
 import { useUserStore } from '@/store/useUserStore';
@@ -38,13 +39,13 @@ export default function UserProfile() {
           cursor: 'pointer',
           borderRadius: 1,
           '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            backgroundColor: (theme) => alpha(theme.palette.common.white, 0.06),
           },
         }}
       >
         <Avatar
           sx={{
-            bgcolor: '#5865f2',
+            bgcolor: 'primary.main',
             width: 40,
             height: 40,
           }}
@@ -55,7 +56,6 @@ export default function UserProfile() {
           <Typography
             variant="body1"
             sx={{
-              color: '#fff',
               fontWeight: 600,
               fontSize: '0.9rem',
             }}
@@ -65,7 +65,7 @@ export default function UserProfile() {
           <Typography
             variant="caption"
             sx={{
-              color: '#b9bbbe',
+              color: 'text.secondary',
               fontSize: '0.75rem',
             }}
           >
@@ -81,8 +81,6 @@ export default function UserProfile() {
         slotProps={{
           paper: {
             sx: {
-              backgroundColor: '#18191c',
-              color: '#fff',
               minWidth: 200,
             },
           },
@@ -90,11 +88,11 @@ export default function UserProfile() {
       >
         <MenuItem onClick={handleClose}>
           <Settings sx={{ mr: 1, fontSize: 20 }} />
-          Cài đặt
+          Settings
         </MenuItem>
-        <MenuItem onClick={handleLogout} sx={{ color: '#ed4245' }}>
+        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
           <Logout sx={{ mr: 1, fontSize: 20 }} />
-          Đăng xuất
+          Sign out
         </MenuItem>
       </Menu>
     </Box>

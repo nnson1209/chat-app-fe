@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AuthProvider from "@/components/auth/AuthProvider";
+import ThemeRegistry from "@/theme/ThemeRegistry";
 
 export const metadata: Metadata = {
-  title: "Chat",
+  title: "Chat Application",
   description: "Real-time chat application",
+  icons: {
+    icon: [
+      {
+        url: "/icon.svg",
+        type: "image/svg+xml",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -13,11 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
-      <body className="antialiased">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+    <html lang="en">
+      <body>
+        <ThemeRegistry>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeRegistry>
       </body>
     </html>
   );

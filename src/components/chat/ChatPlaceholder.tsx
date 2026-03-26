@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ChatBubbleOutline, Forum, Send } from '@mui/icons-material';
 
 interface ChatPlaceholderProps {
@@ -37,7 +38,7 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
               width: 80,
               height: 80,
               borderRadius: '50%',
-              backgroundColor: 'rgba(88, 101, 242, 0.1)',
+              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.12),
               animation: 'pulse 2s ease-in-out infinite',
               '@keyframes pulse': {
                 '0%, 100%': {
@@ -58,7 +59,7 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
               left: '50%',
               transform: 'translate(-50%, -50%)',
               fontSize: 48,
-              color: '#5865f2',
+              color: 'primary.main',
             }}
           />
         </Box>
@@ -66,22 +67,21 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
         <Box sx={{ textAlign: 'center', maxWidth: 400 }}>
           <Typography
             sx={{
-              color: '#fff',
               fontSize: '1.25rem',
               fontWeight: 600,
               mb: 1,
             }}
           >
-            Chưa có tin nhắn nào
+            No messages yet
           </Typography>
           <Typography
             sx={{
-              color: '#b9bbbe',
+              color: 'text.secondary',
               fontSize: '0.9375rem',
               lineHeight: 1.6,
             }}
           >
-            Hãy bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn đầu tiên!
+            Start the conversation by sending the first message.
           </Typography>
         </Box>
       </Box>
@@ -117,7 +117,7 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
             width: 120,
             height: 120,
             borderRadius: '50%',
-            backgroundColor: 'rgba(88, 101, 242, 0.1)',
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.12),
             animation: 'pulse 2s ease-in-out infinite',
             '@keyframes pulse': {
               '0%, 100%': {
@@ -140,7 +140,7 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
             left: '50%',
             transform: 'translate(-50%, -50%)',
             fontSize: 64,
-            color: '#5865f2',
+            color: 'primary.main',
           }}
         />
         
@@ -150,7 +150,7 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
             top: '20%',
             right: '15%',
             fontSize: 28,
-            color: '#43b581',
+            color: 'success.main',
             animation: 'float 3s ease-in-out infinite',
             '@keyframes float': {
               '0%, 100%': {
@@ -167,24 +167,26 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
       <Box sx={{ textAlign: 'center', maxWidth: 480 }}>
         <Typography
           sx={{
-            color: '#fff',
             fontSize: '1.5rem',
             fontWeight: 700,
             mb: 1.5,
           }}
         >
-          Chọn một cuộc trò chuyện để bắt đầu
+          Select a conversation
         </Typography>
         <Typography
           sx={{
-            color: '#b9bbbe',
+            color: 'text.secondary',
             fontSize: '1rem',
             lineHeight: 1.6,
             mb: 3,
           }}
         >
-          Chọn một cuộc trò chuyện từ danh sách bên trái hoặc tạo cuộc trò chuyện mới
-          bằng cách nhấn vào nút <Box component="span" sx={{ color: '#5865f2', fontWeight: 600 }}>+</Box>
+          Pick one from the sidebar, or create a new chat using the
+          {' '}
+          <Box component="span" sx={{ color: 'primary.main', fontWeight: 800 }}>
+            +
+          </Box>
         </Typography>
 
         <Box
@@ -203,12 +205,12 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
               px: 2,
               py: 1,
               borderRadius: 2,
-              backgroundColor: 'rgba(88, 101, 242, 0.1)',
+              backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.12),
             }}
           >
-            <ChatBubbleOutline sx={{ fontSize: 20, color: '#5865f2' }} />
-            <Typography sx={{ color: '#b9bbbe', fontSize: '0.875rem' }}>
-              Nhắn tin riêng tư
+            <ChatBubbleOutline sx={{ fontSize: 20, color: 'primary.main' }} />
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              Direct messages
             </Typography>
           </Box>
           
@@ -220,12 +222,12 @@ export default function ChatPlaceholder({ variant = 'no-conversation' }: ChatPla
               px: 2,
               py: 1,
               borderRadius: 2,
-              backgroundColor: 'rgba(67, 181, 129, 0.1)',
+              backgroundColor: (theme) => alpha(theme.palette.success.main, 0.12),
             }}
           >
-            <Forum sx={{ fontSize: 20, color: '#43b581' }} />
-            <Typography sx={{ color: '#b9bbbe', fontSize: '0.875rem' }}>
-              Trò chuyện nhóm
+            <Forum sx={{ fontSize: 20, color: 'success.main' }} />
+            <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+              Group chats
             </Typography>
           </Box>
         </Box>

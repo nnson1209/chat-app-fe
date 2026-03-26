@@ -11,3 +11,8 @@ body {
   margin: 0;
   min-height: 100%;
 }
+
+/* Hide Next.js dev overlay (error/toast indicator UI). */
+nextjs-portal {
+  display: none !important;
+}

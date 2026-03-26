@@ -10,6 +10,7 @@ import {
   Box,
   CircularProgress,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { UserDetailResponse } from '@/types';
 
 interface UserSearchListProps {
@@ -30,7 +31,7 @@ export default function UserSearchList({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress sx={{ color: '#5865f2' }} size={32} />
+        <CircularProgress color="primary" size={32} />
       </Box>
     );
   }
@@ -47,14 +48,14 @@ export default function UserSearchList({
               borderRadius: 1,
               mb: 0.5,
               '&:hover': {
-                backgroundColor: '#40444b',
+                backgroundColor: (theme) => alpha(theme.palette.common.white, 0.06),
               },
             }}
           >
             <ListItemAvatar>
               <Avatar
                 sx={{
-                  bgcolor: '#5865f2',
+                  bgcolor: 'primary.main',
                   width: 40,
                   height: 40,
                 }}
@@ -64,12 +65,12 @@ export default function UserSearchList({
             </ListItemAvatar>
             <ListItemText
               primary={
-                <Typography sx={{ color: '#fff', fontWeight: 600 }}>
+                <Typography sx={{ fontWeight: 700 }}>
                   {user.username}
                 </Typography>
               }
               secondary={
-                <Typography sx={{ color: '#b9bbbe', fontSize: '0.875rem' }}>
+                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                   {user.email}
                 </Typography>
               }
@@ -88,10 +89,10 @@ export default function UserSearchList({
           justifyContent: 'center',
           alignItems: 'center',
           py: 4,
-          color: '#72767d',
+          color: 'text.secondary',
         }}
       >
-        <Typography>Không tìm thấy người dùng</Typography>
+        <Typography>No users found</Typography>
       </Box>
     );
   }
@@ -103,10 +104,10 @@ export default function UserSearchList({
         justifyContent: 'center',
         alignItems: 'center',
         py: 4,
-        color: '#72767d',
+        color: 'text.secondary',
       }}
     >
-      <Typography>Nhập email hoặc tên để tìm kiếm</Typography>
+      <Typography>Type to search</Typography>
     </Box>
   );
 }

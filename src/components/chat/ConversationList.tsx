@@ -1,9 +1,10 @@
 'use client';
 
 import { Box, List, ListItemButton, ListItemAvatar, Avatar, ListItemText, Typography, CircularProgress } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ConversationDetailResponse } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 
 interface ConversationListProps {
@@ -34,14 +35,14 @@ export default function ConversationList({
     if (!isMounted) return '';
     return formatDistanceToNow(new Date(timeString), {
       addSuffix: false,
-      locale: vi,
-    }).replace('khoảng ', '');
+      locale: enUS,
+    });
   };
 
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-        <CircularProgress sx={{ color: '#5865f2' }} />
+        <CircularProgress color="primary" />
       </Box>
     );
   }
@@ -60,13 +61,13 @@ export default function ConversationList({
             mx: 1,
             mb: 0.5,
             '&.Mui-selected': {
-              backgroundColor: '#404249',
+              backgroundColor: (theme) => alpha(theme.palette.common.white, 0.08),
               '&:hover': {
-                backgroundColor: '#404249',
+                backgroundColor: (theme) => alpha(theme.palette.common.white, 0.08),
               },
             },
             '&:hover': {
-              backgroundColor: '#35373c',
+              backgroundColor: (theme) => alpha(theme.palette.common.white, 0.05),
             },
           }}
         >
@@ -74,7 +75,7 @@ export default function ConversationList({
             <Avatar
               src={conv.conversationAvatar || undefined}
               sx={{
-                bgcolor: '#5865f2',
+                bgcolor: 'primary.main',
                 width: 40,
                 height: 40,
                 fontSize: '1rem',
@@ -90,7 +91,6 @@ export default function ConversationList({
                 <Typography
                   component="span"
                   sx={{
-                    color: '#fff',
                     fontWeight: 600,
                     fontSize: '1rem',
                     overflow: 'hidden',
@@ -106,7 +106,7 @@ export default function ConversationList({
                   <Typography
                     component="span"
                     sx={{
-                      color: '#72767d',
+                      color: 'text.secondary',
                       fontSize: '0.75rem',
                       fontWeight: 400,
                       ml: 1,
@@ -123,7 +123,7 @@ export default function ConversationList({
                 <Typography
                   component="span"
                   sx={{
-                    color: '#b9bbbe',
+                    color: 'text.secondary',
                     fontSize: '0.875rem',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -132,7 +132,7 @@ export default function ConversationList({
                     lineHeight: 1.3,
                   }}
                 >
-                  {conv.lastMessageContent || 'Chưa có tin nhắn'}
+                  {conv.lastMessageContent || 'No messages yet'}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1, flexShrink: 0 }}>
                   <Box
@@ -140,13 +140,13 @@ export default function ConversationList({
                       width: 8,
                       height: 8,
                       borderRadius: '50%',
-                      backgroundColor: conv.isOnline ? '#23a55a' : '#80848e',
+                      backgroundColor: conv.isOnline ? 'success.main' : 'text.disabled',
                     }}
                   />
                   <Typography
                     component="span"
                     sx={{
-                      color: conv.isOnline ? '#23a55a' : '#80848e',
+                      color: conv.isOnline ? 'success.main' : 'text.secondary',
                       fontSize: '0.75rem',
                       fontWeight: 500,
                       whiteSpace: 'nowrap',

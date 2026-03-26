@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Box, TextField, IconButton } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Send, AddCircleOutline } from '@mui/icons-material';
 
 interface MessageInputProps {
@@ -29,8 +30,10 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
   return (
     <Box
       sx={{
-        p: 2,
-        backgroundColor: '#36393f',
+        p: { xs: 1.5, sm: 2 },
+        backgroundColor: 'background.default',
+        borderTop: '1px solid',
+        borderColor: 'divider',
       }}
     >
       <Box
@@ -38,13 +41,13 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
           display: 'flex',
           gap: 1,
           alignItems: 'center',
-          backgroundColor: '#40444b',
+          backgroundColor: (theme) => alpha(theme.palette.background.paper, 0.9),
           borderRadius: 2,
           px: 1.5,
           py: 0.5,
         }}
       >
-        <IconButton size="small" sx={{ color: '#b9bbbe' }}>
+        <IconButton size="small" sx={{ color: 'text.secondary' }}>
           <AddCircleOutline fontSize="small" />
         </IconButton>
 
@@ -55,12 +58,12 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Nhập tin nhắn..."
+          placeholder="Type a message…"
           disabled={disabled}
           variant="standard"
           sx={{
             '& .MuiInput-root': {
-              color: '#dcddde',
+              color: 'text.primary',
               fontSize: '0.9375rem',
               '&:before, &:after': {
                 display: 'none',
@@ -69,7 +72,7 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
             '& .MuiInputBase-input': {
               padding: '8px 0',
               '&::placeholder': {
-                color: '#72767d',
+                color: (theme) => theme.palette.text.secondary,
                 opacity: 1,
               },
             },
@@ -81,10 +84,7 @@ export default function MessageInput({ onSend, disabled = false }: MessageInputP
           disabled={!message.trim() || disabled}
           size="small"
           sx={{
-            color: message.trim() ? '#5865f2' : '#72767d',
-            '&:hover': {
-              color: '#4752c4',
-            },
+            color: message.trim() ? 'primary.main' : 'text.disabled',
           }}
         >
           <Send fontSize="small" />

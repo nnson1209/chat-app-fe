@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { TextField, Button, Typography, Box, Alert, InputAdornment, IconButton } from '@mui/material';
+import { useState, type AnimationEvent, type FormEvent } from 'react';
+import { TextField, Button, Typography, Box, Alert, InputAdornment, IconButton, Link as MuiLink } from '@mui/material';
 import { Visibility, VisibilityOff, Email, Lock } from '@mui/icons-material';
+import { alpha } from '@mui/material/styles';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 
@@ -10,37 +11,38 @@ export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [autofilled, setAutofilled] = useState<{ email: boolean; password: boolean }>({
+    email: false,
+    password: false,
+  });
   const { login, loading, error } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleAutofill =
+    (key: 'email' | 'password') => (e: AnimationEvent<HTMLInputElement>) => {
+      if (e.animationName === 'mui-auto-fill') {
+        setAutofilled((prev) => ({ ...prev, [key]: true }));
+
+        // Browser autofill may not trigger onChange for controlled inputs.
+        // Sync DOM value back into React state so labels/layout stay correct.
+        const nextValue = e.currentTarget.value;
+        if (key === 'email') {
+          if (nextValue && nextValue !== email) setEmail(nextValue);
+        } else {
+          if (nextValue && nextValue !== password) setPassword(nextValue);
+        }
+      }
+      if (e.animationName === 'mui-auto-fill-cancel') {
+        setAutofilled((prev) => ({ ...prev, [key]: false }));
+      }
+    };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     await login({ email, password });
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-      <Typography
-        variant="h4"
-        sx={{
-          color: '#fff',
-          fontWeight: 700,
-          textAlign: 'center',
-          mb: 1,
-        }}
-      >
-        Chào mừng trở lại!
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{
-          color: '#b9bbbe',
-          textAlign: 'center',
-          mb: 3,
-        }}
-      >
-        Chúng tôi rất vui được gặp lại bạn!
-      </Typography>
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -54,72 +56,103 @@ export default function LoginForm() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        sx={{
+        autoComplete="email"
+        size="medium"
+        sx={(theme) => ({
           mb: 2,
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: '#202225',
-            color: '#fff',
-            '& fieldset': { borderColor: '#202225' },
-            '&:hover fieldset': { borderColor: '#4752c4' },
-            '&.Mui-focused fieldset': { borderColor: '#5865f2' },
-          },
-          '& .MuiInputLabel-root': { color: '#b9bbbe' },
-          '& input:-webkit-autofill': {
-            WebkitBoxShadow: '0 0 0 100px #202225 inset',
-            WebkitTextFillColor: '#fff',
-          },
-        }}
+          ...(autofilled.email
+            ? {
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                },
+                '& .MuiOutlinedInput-root:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.11),
+                },
+                '& .MuiOutlinedInput-root.Mui-focused': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                },
+                '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                  borderColor: alpha(theme.palette.primary.main, 0.26),
+                },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                },
+              }
+            : null),
+        })}
         slotProps={{
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <Email sx={{ color: '#b9bbbe', fontSize: 20 }} />
+                <Email fontSize="small" color="action" />
               </InputAdornment>
             ),
+          },
+          htmlInput: {
+            onAnimationStart: handleAutofill('email'),
           },
         }}
       />
 
       <TextField
         fullWidth
-        label="Mật khẩu"
+        label="Password"
         type={showPassword ? 'text' : 'password'}
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required
-        sx={{
+        autoComplete="current-password"
+        size="medium"
+        sx={(theme) => ({
           mb: 3,
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: '#202225',
-            color: '#fff',
-            '& fieldset': { borderColor: '#202225' },
-            '&:hover fieldset': { borderColor: '#4752c4' },
-            '&.Mui-focused fieldset': { borderColor: '#5865f2' },
-          },
-          '& .MuiInputLabel-root': { color: '#b9bbbe' },
-          '& input:-webkit-autofill': {
-            WebkitBoxShadow: '0 0 0 100px #202225 inset',
-            WebkitTextFillColor: '#fff',
-          },
-        }}
+          ...(autofilled.password
+            ? {
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                },
+                '& .MuiOutlinedInput-root:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.11),
+                },
+                '& .MuiOutlinedInput-root.Mui-focused': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.12),
+                },
+                '& .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline': {
+                  borderColor: alpha(theme.palette.primary.main, 0.26),
+                },
+                '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: alpha(theme.palette.primary.main, 0.5),
+                },
+              }
+            : null),
+        })}
         slotProps={{
           input: {
             startAdornment: (
               <InputAdornment position="start">
-                <Lock sx={{ color: '#b9bbbe', fontSize: 20 }} />
+                <Lock fontSize="small" color="action" />
               </InputAdornment>
             ),
             endAdornment: (
-              <InputAdornment position="end">
+              <InputAdornment position="end" sx={{ m: 0, alignSelf: 'center' }}>
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
-                  sx={{ color: '#b9bbbe' }}
+                  color="inherit"
+                  sx={(theme) => ({
+                    color: theme.palette.text.secondary,
+                    bgcolor: 'transparent',
+                    '&:hover': {
+                      bgcolor: 'transparent',
+                    },
+                  })}
                 >
-                  {showPassword ? <VisibilityOff sx={{ fontSize: 20 }} /> : <Visibility sx={{ fontSize: 20 }} />}
+                  {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                 </IconButton>
               </InputAdornment>
             ),
+          },
+          htmlInput: {
+            onAnimationStart: handleAutofill('password'),
           },
         }}
       />
@@ -129,38 +162,17 @@ export default function LoginForm() {
         fullWidth
         variant="contained"
         disabled={loading}
-        sx={{
-          backgroundColor: '#5865f2',
-          color: '#fff',
-          py: 1.5,
-          fontSize: '1rem',
-          fontWeight: 600,
-          textTransform: 'none',
-          '&:hover': {
-            backgroundColor: '#4752c4',
-          },
-          '&:disabled': {
-            backgroundColor: '#4752c4',
-            opacity: 0.5,
-          },
-        }}
+        sx={{ py: 1.25 }}
       >
-        {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        {loading ? 'Signing in…' : 'Sign in'}
       </Button>
 
       <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography variant="body2" sx={{ color: '#b9bbbe' }}>
-          Bạn chưa có tài khoản?{' '}
-          <Link
-            href="/register"
-            style={{
-              color: '#00b0f4',
-              textDecoration: 'none',
-              fontWeight: 600,
-            }}
-          >
-            Đăng ký
-          </Link>
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          Don’t have an account?{' '}
+          <MuiLink component={Link} href="/register" underline="hover" color="primary" sx={{ fontWeight: 700 }}>
+            Create one
+          </MuiLink>
         </Typography>
       </Box>
     </Box>

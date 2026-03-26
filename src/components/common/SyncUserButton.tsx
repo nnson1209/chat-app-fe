@@ -1,6 +1,7 @@
 'use client';
 
 import { Button, CircularProgress } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Refresh } from '@mui/icons-material';
 import { useUser } from '@/hooks/useUser';
 
@@ -21,14 +22,13 @@ export default function RefreshUserButton() {
       disabled={loading}
       startIcon={loading ? <CircularProgress size={16} /> : <Refresh />}
       sx={{
-        color: '#b9bbbe',
-        textTransform: 'none',
+        color: 'text.secondary',
         '&:hover': {
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          backgroundColor: (theme) => alpha(theme.palette.common.white, 0.06),
         },
       }}
     >
-      {loading ? 'Đang tải...' : 'Làm mới thông tin'}
+      {loading ? 'Refreshing…' : 'Refresh profile'}
     </Button>
   );
 }

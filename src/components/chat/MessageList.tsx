@@ -1,9 +1,10 @@
 'use client';
 
 import { Box, Avatar, Typography, CircularProgress } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { ChatMessageResponse } from '@/types';
 import { format, isToday, isYesterday } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import { useUserStore } from '@/store/useUserStore';
 
 interface MessageListProps {
@@ -17,17 +18,17 @@ export default function MessageList({ messages, loading = false }: MessageListPr
   const formatMessageTime = (dateString: string) => {
     const date = new Date(dateString);
     if (isToday(date)) {
-      return format(date, 'HH:mm', { locale: vi });
+      return format(date, 'HH:mm', { locale: enUS });
     } else if (isYesterday(date)) {
-      return `Hôm qua ${format(date, 'HH:mm', { locale: vi })}`;
+      return `Yesterday ${format(date, 'HH:mm', { locale: enUS })}`;
     }
-    return format(date, 'dd/MM HH:mm', { locale: vi });
+    return format(date, 'MM/dd HH:mm', { locale: enUS });
   };
 
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-        <CircularProgress sx={{ color: '#5865f2' }} />
+        <CircularProgress color="primary" />
       </Box>
     );
   }
@@ -40,10 +41,10 @@ export default function MessageList({ messages, loading = false }: MessageListPr
           justifyContent: 'center',
           alignItems: 'center',
           height: '100%',
-          color: '#72767d',
+          color: 'text.secondary',
         }}
       >
-        <Typography variant="body2">Chưa có tin nhắn nào</Typography>
+        <Typography variant="body2">No messages yet</Typography>
       </Box>
     );
   }
@@ -53,7 +54,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
       sx={{
         flex: 1,
         overflowY: 'auto',
-        px: 3,
+        px: { xs: 2, sm: 3 },
         py: 2,
         display: 'flex',
         flexDirection: 'column',
@@ -64,10 +65,10 @@ export default function MessageList({ messages, loading = false }: MessageListPr
           background: 'transparent',
         },
         '&::-webkit-scrollbar-thumb': {
-          background: '#1a1b1e',
+          background: (theme) => alpha(theme.palette.common.white, 0.16),
           borderRadius: '3px',
           '&:hover': {
-            background: '#2e3035',
+            background: (theme) => alpha(theme.palette.common.white, 0.24),
           },
         },
       }}
@@ -93,7 +94,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
                 {showAvatar && (
                   <Avatar
                     sx={{
-                      bgcolor: '#43b581',
+                      bgcolor: 'success.main',
                       width: 32,
                       height: 32,
                       fontSize: '0.875rem',
@@ -117,7 +118,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
               {showAvatar && (
                 <Typography
                   sx={{
-                    color: isOwn ? '#5865f2' : '#43b581',
+                    color: isOwn ? 'primary.main' : 'success.main',
                     fontWeight: 600,
                     fontSize: '0.8125rem',
                     mb: 0.5,
@@ -131,12 +132,12 @@ export default function MessageList({ messages, loading = false }: MessageListPr
               <Box
                 sx={{
                   position: 'relative',
-                  backgroundColor: isOwn ? '#5865f2' : '#40444b',
-                  color: '#fff',
+                  backgroundColor: isOwn ? 'primary.main' : (theme) => alpha(theme.palette.background.paper, 0.9),
+                  color: isOwn ? 'primary.contrastText' : 'text.primary',
                   px: 2,
                   py: 1.25,
                   borderRadius: '16px',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.15)',
+                  boxShadow: (theme) => theme.shadows[2],
                   '&:hover .message-time': {
                     opacity: 1,
                   },
@@ -160,7 +161,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
                       position: 'absolute',
                       bottom: -20,
                       [isOwn ? 'right' : 'left']: 8,
-                      color: '#72767d',
+                      color: 'text.secondary',
                       fontSize: '0.6875rem',
                       opacity: 0,
                       transition: 'opacity 0.2s',
@@ -177,7 +178,7 @@ export default function MessageList({ messages, loading = false }: MessageListPr
                 {showAvatar && (
                   <Avatar
                     sx={{
-                      bgcolor: '#5865f2',
+                      bgcolor: 'primary.main',
                       width: 32,
                       height: 32,
                       fontSize: '0.875rem',

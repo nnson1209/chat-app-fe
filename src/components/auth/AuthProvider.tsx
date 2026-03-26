@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import { useUserStore } from '@/store/useUserStore';
 import { authService } from '@/services/auth.service';
 
@@ -14,9 +15,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const initAuth = async () => {
-      // Chỉ chạy trên client
-      if (typeof window === 'undefined') return;
-      
+      // Client-side only (useEffect doesn't run on server)
       const token = localStorage.getItem('accessToken');
       
       if (token) {
@@ -38,40 +37,19 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     initAuth();
   }, [setUser, clearUser]);
 
-  // Trên server, luôn render children để tránh hydration mismatch
-  if (typeof window === 'undefined') {
-    return <>{children}</>;
-  }
-
-  // Trên client, chờ initialization
+  // Render a consistent shell on both server + initial client render
   if (!isInitialized) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '100vh',
-          backgroundColor: '#36393f',
+      <Box
+        sx={{
+          display: 'grid',
+          placeItems: 'center',
+          minHeight: '100dvh',
+          bgcolor: 'background.default',
         }}
       >
-        <div
-          style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid #404249',
-            borderTop: '4px solid #5865f2',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-          }}
-        />
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+        <CircularProgress color="primary" />
+      </Box>
     );
   }
 
